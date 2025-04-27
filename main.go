@@ -2,19 +2,22 @@ package main
 
 import (
 	"flag"
-	"github.com/robfig/cron/v3"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/robfig/cron/v3"
 )
 
 var confPath = flag.String("c", "./config.yml", "配置文件路径")
-var runMode = flag.String("r", "cron", "运行模式")
-var isAcIpgroup = flag.String("m", "0", "启用ip分组和下一条网关模式")
-var cleanTag = flag.String("tag", "cleanAll", "规则名称") //COMMENT_IKUAI_BYPASS
-var exportPath = flag.String("exportPath", "/tmp", "导出文件路径")
-var ikuaiLoginInfo = flag.String("login", "", "爱快登陆地址,用户名,密码")
+var runMode = flag.String("r", "cron", "运行模式，马上执行 或者定时执行 或者执行一次")
+var isAcIpgroup = flag.String("m", "ispdomain", "ipgroup(启用ip分组和下一条网关模式) 或者 ispdomain(isp和域名分流模式)")
+var cleanTag = flag.String("tag", "cleanAll", "要清理的分流规则备注名或关键词") //COMMENT_IKUAI_BYPASS
+var exportPath = flag.String("exportPath", "/tmp", "域名分流规则导出文件路径")
+var ikuaiLoginInfo = flag.String("login", "", "爱快登陆地址,用户名,密码。优先级比配置文件内的高")
+var delOldRule = flag.String("delOldRule", "after", "删除旧规则顺序 after before ")
+var isIpGroupNameAddRandomSuff = flag.String("isIpGroupNameAddRandomSuff", "1", "ip分组名称是否增加随机数后缀(仅ip分组模式有效) 1为添加 0不添加") //#issues/76
 
 func main() {
 	flag.Parse()
@@ -40,12 +43,12 @@ func main() {
 		exportDomainSteamToTxt()
 		return
 	case "cron":
-		log.Println("cronA 模式,执行一次，然后进入定时执行模式")
-		update()
+		log.Println("cron 模式,执行一次，然后进入定时执行模式")
+		updateEntrance()
 	case "cronAft":
-		log.Println("cronAft 模式稍后定时执行")
+		log.Println("cronAft 模式，暂时不执行，稍后定时执行")
 	case "nocron", "once", "1":
-		update()
+		updateEntrance()
 		log.Println("once 模式 执行完毕自动退出")
 		return
 	case "clean":
@@ -61,14 +64,14 @@ func main() {
 		log.Println("-r 参数错误")
 		return
 	}
-
+	// 定时任务启动和检查  ================= start
 	if conf.Cron == "" {
 		log.Println("Cron配为空 自动推出")
 		return
 	}
 
 	c := cron.New()
-	_, err = c.AddFunc(conf.Cron, update)
+	_, err = c.AddFunc(conf.Cron, updateEntrance)
 	if err != nil {
 		log.Println("启动计划任务失败：", err)
 		return
@@ -82,10 +85,11 @@ func main() {
 		signal.Notify(osSignals, os.Interrupt, os.Kill, syscall.SIGTERM)
 		<-osSignals
 	}
+	// 定时任务启动和检查  ================= end
 
 }
 
-func update() {
+func updateEntrance() {
 	switch *isAcIpgroup {
 	case "ispdomain":
 		log.Println("启动 ... 自定义isp和域名分流模式 模式")
@@ -93,12 +97,19 @@ func update() {
 	case "ipgroup":
 		log.Println("启动 ... ip分组和下一条网关模式")
 		updateIpgroup()
+	case "ipv6group":
+		log.Println("启动 ... ipv6分组")
+		updateIpv6group()
 	case "ii":
-		log.Println("启动 ...  自定义isp和域名分流模式 模式")
-		log.Println("启动 ... ip分组和下一条网关模式")
-
+		log.Println("先 启动 ...  自定义isp和域名分流模式 模式")
+		log.Println("再 启动 ... ip分组和下一条网关模式")
 		updateIspRule()
 		updateIpgroup()
+	case "ip":
+		log.Println("先 启动 ...  ip分组和下一条网关模式")
+		log.Println("再 启动 ... ipv6分组")
+		updateIpgroup()
+		updateIpv6group()
 	}
 
 }

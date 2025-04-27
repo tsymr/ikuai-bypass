@@ -7,9 +7,9 @@ import (
 	"strings"
 )
 
-const FUNC_NAME_IP_GROUP = "ipgroup"
+const FUNC_NAME_IPV6_GROUP = "ipv6group"
 
-type IpGroupData struct {
+type Ipv6GroupData struct {
 	AddrPool  string `json:"addr_pool"`
 	Comment   string `json:"comment"`
 	GroupName string `json:"group_name"`
@@ -17,7 +17,7 @@ type IpGroupData struct {
 	Type      int    `json:"type"`
 }
 
-func (i *IKuai) ShowIpGroupByComment(comment string) (result []IpGroupData, err error) {
+func (i *IKuai) ShowIpv6GroupByComment(comment string) (result []Ipv6GroupData, err error) {
 	param := struct {
 		Finds    string `json:"FINDS"`
 		Keywords string `json:"KEYWORDS"`
@@ -31,7 +31,7 @@ func (i *IKuai) ShowIpGroupByComment(comment string) (result []IpGroupData, err 
 		Type:     "data",
 	}
 	req := CallReq{
-		FuncName: FUNC_NAME_IP_GROUP,
+		FuncName: FUNC_NAME_IPV6_GROUP,
 		Action:   "show",
 		Param:    &param,
 	}
@@ -47,7 +47,7 @@ func (i *IKuai) ShowIpGroupByComment(comment string) (result []IpGroupData, err 
 	return
 }
 
-func (i *IKuai) ShowIpGroupByName(name string) (result []IpGroupData, err error) {
+func (i *IKuai) ShowIpv6GroupByName(name string) (result []Ipv6GroupData, err error) {
 	param := struct {
 		Finds    string `json:"FINDS"`
 		Keywords string `json:"KEYWORDS"`
@@ -61,7 +61,7 @@ func (i *IKuai) ShowIpGroupByName(name string) (result []IpGroupData, err error)
 		Type:     "data",
 	}
 	req := CallReq{
-		FuncName: FUNC_NAME_IP_GROUP,
+		FuncName: FUNC_NAME_IPV6_GROUP,
 		Action:   "show",
 		Param:    &param,
 	}
@@ -77,7 +77,7 @@ func (i *IKuai) ShowIpGroupByName(name string) (result []IpGroupData, err error)
 	return
 }
 
-func (i *IKuai) AddIpGroup(groupName, addrPool string) error {
+func (i *IKuai) AddIpv6Group(groupName, addrPool string) error {
 	param := struct {
 		AddrPool  string `json:"addr_pool"`
 		Comment   string `json:"comment"`
@@ -92,7 +92,7 @@ func (i *IKuai) AddIpGroup(groupName, addrPool string) error {
 		Type:      0,
 	}
 	req := CallReq{
-		FuncName: FUNC_NAME_IP_GROUP,
+		FuncName: FUNC_NAME_IPV6_GROUP,
 		Action:   "add",
 		Param:    &param,
 	}
@@ -107,14 +107,14 @@ func (i *IKuai) AddIpGroup(groupName, addrPool string) error {
 	return nil
 }
 
-func (i *IKuai) DelIpGroup(id string) error {
+func (i *IKuai) DelIpv6Group(id string) error {
 	param := struct {
 		Id string `json:"id"`
 	}{
 		Id: id,
 	}
 	req := CallReq{
-		FuncName: FUNC_NAME_IP_GROUP,
+		FuncName: FUNC_NAME_IPV6_GROUP,
 		Action:   "del",
 		Param:    &param,
 	}
@@ -129,8 +129,8 @@ func (i *IKuai) DelIpGroup(id string) error {
 	return nil
 }
 
-func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
-	log.Println("ip分组== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的ip分组规则")
+func (i *IKuai) GetIpv6Group(tag string) (preIds string, err error) {
+	log.Println("ipv6分组== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的IPv6分组规则")
 	var tagComment = ""
 	if tag == "" {
 		tagComment = COMMENT_IKUAI_BYPASS
@@ -140,8 +140,8 @@ func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
 
 	var ids []string // 初始化 ids 切片
 
-	var data []IpGroupData
-	data, err = i.ShowIpGroupByComment(tagComment)  // 获取数据并处理错误
+	var data []Ipv6GroupData
+	data, err = i.ShowIpv6GroupByComment(tagComment)  // 获取数据并处理错误
 	if err != nil {
 		return "", err // 返回错误
 	}
@@ -160,11 +160,11 @@ func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
 	return preIds, nil   // 返回 IDs 和 nil 错误
 }
 
-func (i *IKuai) DelIKuaiBypassIpGroup(cleanTag string) (err error) {
+func (i *IKuai) DelIKuaiBypassIpv6Group(cleanTag string) (err error) {
 
 	for {
-		var data []IpGroupData
-		data, err = i.ShowIpGroupByComment(COMMENT_IKUAI_BYPASS)
+		var data []Ipv6GroupData
+		data, err = i.ShowIpv6GroupByComment(COMMENT_IKUAI_BYPASS)
 		var ids []string
 		for _, d := range data {
 			//log.Println("在判断:", d.GroupName, d.Comment)
@@ -185,16 +185,16 @@ func (i *IKuai) DelIKuaiBypassIpGroup(cleanTag string) (err error) {
 			return
 		}
 		id := strings.Join(ids, ",")
-		err = i.DelIpGroup(id)
+		err = i.DelIpv6Group(id)
 		if err != nil {
 			return
 		}
 	}
 }
 
-func (i *IKuai) GetAllIKuaiBypassIpGroupNamesByName(name string) (names []string, err error) {
-	var data []IpGroupData
-	data, err = i.ShowIpGroupByName(name)
+func (i *IKuai) GetAllIKuaiBypassIpv6GroupNamesByName(name string) (names []string, err error) {
+	var data []Ipv6GroupData
+	data, err = i.ShowIpv6GroupByName(name)
 
 	for _, d := range data {
 		// for https://github.com/joyanhui/ikuai-bypass/issues/30

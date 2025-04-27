@@ -21,6 +21,9 @@ type StreamDomainData struct {
 }
 
 func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string) error {
+	// https://github.com/joyanhui/ikuai-bypass/issues/24
+	// 去掉末尾空行
+	domains = strings.Trim(strings.Trim(domains, "\n"), "\r")
 	param := struct {
 		Interface string `json:"interface"`
 		SrcAddr   string `json:"src_addr"`
@@ -106,8 +109,8 @@ func (i *IKuai) DelStreamDomain(id string) error {
 	return nil
 }
 
-// PrepareDelStreamDomainAll 为了防止误删，先查询，然后再删除
-func (i *IKuai) PrepareDelStreamDomainAll(tag string) (preIds string, err error) {
+// GetStreamDomainAll 为了防止误删，先查询，然后再删除
+func (i *IKuai) GetStreamDomainAll(tag string) (preIds string, err error) {
 	log.Println("域名分流== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的域名分流规则")
 	preIds = ""
 	err = nil

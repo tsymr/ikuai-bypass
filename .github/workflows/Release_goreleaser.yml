@@ -1,10 +1,10 @@
-name: Release mosdns
+name: Release ikuai-bypass
 
 on:
   push:
     tags:
       - 'v*'
-
+        
 jobs:
 
   build-release:

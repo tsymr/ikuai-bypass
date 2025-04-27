@@ -5,7 +5,7 @@
 # 最好逐行运行
 # opkg update
 # opkg install wget unzip 
-export GhProxy=https://mirror.ghproxy.com/  # 配置github代理 如果不可用请自行更换如果已经有直连github环境也可以去掉这行
+export GhProxy=https://ghp.ci/  # 配置github代理 如果不可用请自行更换如果已经有直连github环境也可以去掉这行
 mkdir -p /opt/ && cd  /opt/
 wget ${GhProxy}https://github.com/joyanhui/ikuai-bypass/releases/download/v1.0.0-beta2/ikuai-bypass-linux-amd64.zip
 unzip ikuai-bypass-linux-amd64.zip && rm -rf ikuai-bypass-linux-amd64.zip && rm -rf README.md
@@ -13,7 +13,7 @@ unzip ikuai-bypass-linux-amd64.zip && rm -rf ikuai-bypass-linux-amd64.zip && rm 
 mv config.yml  ikuai-bypass.yml 
 # 或者用最新的演示配置
 rm -rf ikuai-bypass.yml && rm -rf config.yml
-wget ${GhProxy}https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/config_example.yml -O ikuai-bypass.yml
+wget ${GhProxy}https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/config.yml -O ikuai-bypass.yml
 # 更新或者下载最新版到 /opt/注意修改版本号CPU架构以及路径  =================================== end
 # 手动执行一次 检查执行结果
 #   /opt/ikuai-bypass -r 1 -c /opt/ikuai-bypass.yml

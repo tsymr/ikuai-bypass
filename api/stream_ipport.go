@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -26,7 +27,7 @@ type StreamIpPortData struct {
 	Type      int    `json:"type"`
 }
 
-func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string) error {
+func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string, tag string, mode int, ifaceband int) error {
 
 	param := struct {
 		Interface string `json:"interface"`
@@ -44,7 +45,7 @@ func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string
 	}{
 		Interface: iface,
 		Protocol:  "any",
-		Mode:      0,
+		Mode:      mode,
 		DstAddr:   dstAddr,
 		SrcAddr:   srcAddr,
 		Week:      "1234567",
@@ -52,8 +53,8 @@ func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string
 		Enabled:   "yes",
 		Type:      forwardType,
 		Nexthop:   nexthop,
-		IfaceBand: 0,
-		Comment:   COMMENT_IKUAI_BYPASS,
+		IfaceBand: ifaceband,
+		Comment:   COMMENT_IKUAI_BYPASS + "_" + tag,
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_STREAM_IPPORT,
@@ -123,7 +124,7 @@ func (i *IKuai) DelStreamIpPort(id string) error {
 	return nil
 }
 
-func (i *IKuai) DelIKuaiBypassStreamIpPort() (err error) {
+func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 	for {
 		var data []StreamIpPortData
 		data, err = i.ShowStreamIpPortByComment(COMMENT_IKUAI_BYPASS)
@@ -132,9 +133,21 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort() (err error) {
 		}
 		var ids []string
 		for _, d := range data {
-			if d.Comment == COMMENT_IKUAI_BYPASS {
-				ids = append(ids, strconv.Itoa(d.ID))
+
+			if cleanTag == "cleanAll" {
+				if d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) {
+					ids = append(ids, strconv.Itoa(d.ID))
+				}
+			} else {
+				if cleanTag == "" {
+					cleanTag = COMMENT_IKUAI_BYPASS
+				}
+
+				if d.Comment == cleanTag || d.Comment == COMMENT_IKUAI_BYPASS+"_"+cleanTag {
+					ids = append(ids, strconv.Itoa(d.ID))
+				}
 			}
+
 		}
 		if len(ids) <= 0 {
 			return
@@ -146,3 +159,26 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort() (err error) {
 		}
 	}
 }
+
+func (i *IKuai) GetStreamIpPortIds(tag string) (preDelIds string, err error) {
+	log.Println("端口分流== 正在查询 备注为:", COMMENT_IKUAI_BYPASS, "的端口分流规则")
+	var data []StreamIpPortData
+	data, err = i.ShowStreamIpPortByComment(COMMENT_IKUAI_BYPASS)
+	if err != nil {
+		return
+	}
+	var ids []string
+
+	for _, d := range data {
+		ids = append(ids, strconv.Itoa(d.ID))
+	}
+
+	if len(ids) <= 0 {
+		return "", nil // 返回空字符串和 nil 错误
+	}
+
+	preDelIds = strings.Join(ids, ",")  // 将 IDs 连接成逗号分隔的字符串
+
+	return preDelIds, nil   // 返回 IDs 和 nil 错误
+}
+
